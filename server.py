@@ -1,5 +1,5 @@
 # my modules
-from func import rev_str, attach_send  # recv_stream
+from ults import rev_str, attach_send  # recv_stream
 import dotenv
 import os
 import socket
@@ -26,5 +26,4 @@ while True:
     rec_data = first_rec[(seperated_pos + 1):]
     while len(rec_data) < rec_len:
         rec_data += conn.recv(BUFFER_SIZE).decode()
-    print('ok')
-    s.send(attach_send(rev_str(rec_data)))
+    conn.send(attach_send(rev_str(rec_data)))

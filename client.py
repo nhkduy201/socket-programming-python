@@ -1,4 +1,4 @@
-from func import attach_send  # my modules
+from ults import attach_send  # my modules
 import socket
 # for env var
 import os
@@ -16,15 +16,10 @@ req_data = ''
 while req_data != '!break':
     req_data = input('send something: ')
     s.send(attach_send(req_data))
-    rec_data = ''
-    while True:
-        first_rec = s.recv(BUFFER_SIZE).decode()
-        if len(first_rec) > 0:
-            seperated_pos = first_rec.find(' ')
-            rec_len = int(first_rec[:seperated_pos])
-            rec_data = first_rec[(seperated_pos + 1):]
-            while len(rec_data) < rec_len:
-                rec_data += s.recv(BUFFER_SIZE).decode()
-        else:
-            print('still waiting...')
+    first_rec = s.recv(BUFFER_SIZE).decode()
+    seperated_pos = first_rec.find(' ')
+    rec_len = int(first_rec[:seperated_pos])
+    rec_data = first_rec[(seperated_pos + 1):]
+    while len(rec_data) < rec_len:
+        rec_data += s.recv(BUFFER_SIZE).decode()
     print(rec_data)
