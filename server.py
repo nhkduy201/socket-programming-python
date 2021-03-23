@@ -20,10 +20,12 @@ s.listen()
 while True:
     conn, addr = s.accept()
     print(f'Connected by {addr}')
-    first_rec = conn.recv(BUFFER_SIZE).decode()
-    seperated_pos = first_rec.find(' ')
-    rec_len = int(first_rec[:seperated_pos])
-    rec_data = first_rec[(seperated_pos + 1):]
-    while len(rec_data) < rec_len:
-        rec_data += conn.recv(BUFFER_SIZE).decode()
-    conn.send(attach_send(rev_str(rec_data)))
+    while True:
+        first_rec = conn.recv(BUFFER_SIZE).decode()
+        if len(first_rec) > 0:
+            seperated_pos = first_rec.find(' ')
+            rec_len = int(first_rec[:seperated_pos])
+            rec_data = first_rec[(seperated_pos + 1):]
+            while len(rec_data) < rec_len:
+                rec_data += conn.recv(BUFFER_SIZE).decode()
+            conn.send(attach_send(rev_str(rec_data)))
