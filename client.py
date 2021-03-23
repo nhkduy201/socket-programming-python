@@ -13,8 +13,8 @@ s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 s.connect((HOST, PORT))
 
 req_data = ''
-while req_data != '!break':
-    req_data = input('send something: ')
+while True:
+    req_data = input('send: ')
     s.send(attach_send(req_data))
     first_rec = s.recv(BUFFER_SIZE).decode()
     seperated_pos = first_rec.find(' ')

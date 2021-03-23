@@ -1,3 +1,6 @@
+import os
+
+
 def rev_str(str):
     return ''.join(reversed(str))
 
@@ -14,3 +17,18 @@ def recv_stream(socket, buff):
 
 def attach_send(send_data):
     return (str(len(send_data)) + ' ' + send_data).encode()
+
+
+def clr_scr():
+    clear_cmd = ''
+    if os.name == 'nt':
+        clear_cmd = 'cls'
+    else:
+        if os.name == 'posix':
+            clear_cmd = 'clear'
+    # return subprocess.run(clear_cmd, shell=True) == 0
+    os.system(clear_cmd)
+
+
+def print_r(str_val):
+    print(f'{str_val:>{os.get_terminal_size().columns}}')
