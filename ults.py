@@ -1,8 +1,8 @@
 import os
 
 
-def rev_str(str):
-    return ''.join(reversed(str))
+# def rev_str(str):
+#     return ''.join(reversed(str))
 
 
 def recv_stream(socket, buff):

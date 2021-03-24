@@ -1,5 +1,5 @@
 # my modules
-from ults import rev_str, attach_send  # recv_stream
+from ults import attach_send, print_r  # recv_stream
 import dotenv
 import os
 import socket
@@ -18,14 +18,16 @@ s.bind((HOST, PORT))
 s.listen()
 
 while True:
+    print('waiting for message...')
     conn, addr = s.accept()
-    print(f'Connected by {addr}')
     while True:
         first_rec = conn.recv(BUFFER_SIZE).decode()
-        if len(first_rec) > 0:
-            seperated_pos = first_rec.find(' ')
-            rec_len = int(first_rec[:seperated_pos])
-            rec_data = first_rec[(seperated_pos + 1):]
-            while len(rec_data) < rec_len:
-                rec_data += conn.recv(BUFFER_SIZE).decode()
-            conn.send(attach_send(rev_str(rec_data)))
+        seperated_pos = first_rec.find(' ')
+        rec_len = int(first_rec[:seperated_pos])
+        rec_msg = first_rec[(seperated_pos + 1):]
+        while len(rec_msg) < rec_len:
+            rec_msg += conn.recv(BUFFER_SIZE).decode()
+        print_r(rec_msg)
+        send_msg = input('send: ')
+        print(send_msg)
+        conn.send(attach_send(send_msg))
