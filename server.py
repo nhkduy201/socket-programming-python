@@ -1,28 +1,31 @@
-# my modules
-from ults import attach_send, print_r, recv_stream
+import socket
+from threading import Thread
+from ults import rev_str, recv_stream, attach_send
 import dotenv
 import os
-import socket
-
-# socket
-# for env var
 dotenv.load_dotenv()
-
 
 HOST = os.getenv('HOST')
 PORT = int(os.getenv('PORT'))
 BUFFER_SIZE = int(os.getenv('BUFFER_SIZE'))
 
-s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-s.bind((HOST, PORT))
-s.listen()
+
+def client_thread(conn, ip, port):
+    while True:
+        req = recv_stream(conn, BUFFER_SIZE)
+        res = rev_str(req)
+        conn.sendall(attach_send(res))
+        print(f'Response sent to {ip}{port}')
+
+
+soc = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+soc.bind((HOST, PORT))
+soc.listen(10)
+print('Socket now listening')
+
 
 while True:
-    print('waiting for message...')
-    conn, addr = s.accept()
-    while True:
-        rec_msg = recv_stream(conn, BUFFER_SIZE)
-        print_r(rec_msg)
-        send_msg = input('send: ')
-        print(send_msg)
-        conn.send(attach_send(send_msg))
+    conn, addr = soc.accept()
+    ip, port = str(addr[0]), str(addr[1])
+    print('Accepting connection from ' + ip + ':' + port)
+    Thread(target=client_thread, args=[conn, ip, port]).start()
