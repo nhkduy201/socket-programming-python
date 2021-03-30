@@ -12,7 +12,11 @@ BUFFER_SIZE = int(os.getenv('BUFFER_SIZE'))
 sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 sock.connect((HOST, PORT))
 while True:
-    clients_input = input("Proceed what: ")
-    sock.send(attach_send(clients_input))
-    res = recv_stream(sock, BUFFER_SIZE)
-    print(res)
+    try:
+        req_mes = input("Proceed what: ")
+        if len(req_mes):
+            sock.send(attach_send(req_mes))
+            res = recv_stream(sock, BUFFER_SIZE)
+            print(res)
+    except KeyboardInterrupt:
+        break

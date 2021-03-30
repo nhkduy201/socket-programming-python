@@ -7,6 +7,8 @@ def rev_str(str):
 
 def recv_stream(socket, buff):
     first_rec = socket.recv(buff).decode()
+    if len(first_rec) == 0:
+        return ''
     seperated_pos = first_rec.find(' ')
     rec_len = int(first_rec[:seperated_pos])
     rec_msg = first_rec[(seperated_pos + 1):]

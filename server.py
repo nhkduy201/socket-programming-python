@@ -13,9 +13,12 @@ BUFFER_SIZE = int(os.getenv('BUFFER_SIZE'))
 def client_thread(conn, ip, port):
     while True:
         req = recv_stream(conn, BUFFER_SIZE)
+        if not len(req):
+            conn.close()
+            print(f'Disconnected from {ip}{port}')
+            break
         res = rev_str(req)
         conn.sendall(attach_send(res))
-        print(f'Response sent to {ip}{port}')
 
 
 soc = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -25,7 +28,10 @@ print('Socket now listening')
 
 
 while True:
-    conn, addr = soc.accept()
+    try:
+        conn, addr = soc.accept()
+    except KeyboardInterrupt:
+        break
     ip, port = str(addr[0]), str(addr[1])
     print('Accepting connection from ' + ip + ':' + port)
     Thread(target=client_thread, args=[conn, ip, port]).start()
