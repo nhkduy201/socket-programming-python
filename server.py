@@ -1,6 +1,6 @@
 import socket
 from threading import Thread
-from ults import rev_str, recv_stream, attach_send
+from ults import *
 import dotenv
 import os
 dotenv.load_dotenv()
@@ -10,15 +10,17 @@ PORT = int(os.getenv('PORT'))
 BUFFER_SIZE = int(os.getenv('BUFFER_SIZE'))
 
 
-def client_thread(conn, ip, port):
+def client_thread(con, ip, port):
+    is_signin = False
+    is_admin = False
+    cur = get_db_cur()
     while True:
-        req = recv_stream(conn, BUFFER_SIZE)
+        req = receive(con, BUFFER_SIZE)
         if not len(req):
-            conn.close()
-            print(f'Disconnected from {ip}{port}')
+            con.close()
+            print(f'{ip}:{port} disconnected')
             break
-        res = rev_str(req)
-        conn.sendall(attach_send(res))
+        is_signin, is_admin = process_send(con, req, is_signin, is_admin, cur)
 
 
 soc = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -29,9 +31,9 @@ print('Socket now listening')
 
 while True:
     try:
-        conn, addr = soc.accept()
+        con, addr = soc.accept()
     except KeyboardInterrupt:
         break
-    ip, port = str(addr[0]), str(addr[1])
-    print('Accepting connection from ' + ip + ':' + port)
-    Thread(target=client_thread, args=[conn, ip, port]).start()
+    ip, port = addr[0], str(addr[1])
+    print(f'{ip}:{port} connected')
+    Thread(target=client_thread, args=[con, ip, port]).start()
