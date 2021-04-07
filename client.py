@@ -1,7 +1,7 @@
 import socket
 import dotenv
 import os
-from ults import receive, attach_send
+from ults import receive, attach_send, print_res
 dotenv.load_dotenv()
 
 HOST = os.getenv('HOST')
@@ -17,6 +17,6 @@ while True:
         if len(req_mes):
             sock.send(attach_send(req_mes))
             res = receive(sock, BUFFER_SIZE)
-            print(res)
+            print_res(res)
     except KeyboardInterrupt:
         break

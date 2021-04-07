@@ -1,5 +1,6 @@
 import os
 import db
+import pickle
 
 
 def get_db_cur():
@@ -7,19 +8,20 @@ def get_db_cur():
 
 
 def receive(socket, buff):
-    first_rec = socket.recv(buff).decode()
+    first_rec = socket.recv(buff)
     if len(first_rec) == 0:
         return ''
-    seperated_pos = first_rec.find(' ')
-    rec_len = int(first_rec[:seperated_pos])
-    rec_msg = first_rec[(seperated_pos + 1):]
+    split_first = first_rec.split(b' ', 1)
+    rec_len = int(split_first[0])
+    rec_msg = split_first[1]
     while len(rec_msg) < rec_len:
-        rec_msg += socket.recv(buff).decode()
-    return rec_msg
+        rec_msg += socket.recv(buff)
+    return pickle.loads(rec_msg)
 
 
 def attach_send(send_data):
-    return (str(len(send_data)) + ' ' + send_data).encode()
+    dump_data = pickle.dumps(send_data)
+    return bytes(f'{len(dump_data)} ', 'utf-8') + dump_data
 
 
 def clr_scr():
@@ -33,8 +35,24 @@ def clr_scr():
     os.system(clear_cmd)
 
 
-def print_r(str_val):
-    print(f'{str_val:>{os.get_terminal_size().columns}}')
+def format_line(line):
+    formated_line = ''
+    gap_size = 5
+    if str(type(line)) == "<class 'tuple'>":
+        for i in range(len(line) - 1):
+            formated_line += str(line[i]) + ' ' * gap_size
+        formated_line += str(line[len(line) - 1])
+    else:
+        formated_line = line
+    return formated_line
+
+
+def print_res(res):
+    if str(type(res)) == "<class 'list'>":
+        for r in res:
+            print(format_line(r))
+    else:
+        print(format_line(res))
 
 
 def is_valid_cmd(cmd, para):
@@ -54,7 +72,9 @@ def process_send(con, req, is_signin, is_admin, cur):
     res = ''
     cmd = req.split()[0]
     para = tuple(req.split()[1:])
-    if is_valid_cmd(cmd, para):
+    if not is_valid_cmd(cmd, para):
+        res = 'Invalid command'
+    else:
         if not is_signin:
             if cmd == '!su':
                 res = db.signup(cur, para)
@@ -66,10 +86,13 @@ def process_send(con, req, is_signin, is_admin, cur):
             if cmd == '!su' or cmd == '!si':
                 res = 'You\'ve already signed in'
             elif cmd != '!help':
-                res = f'Data for {cmd} command'
+                if cmd == '!ls':
+                    res = db.get_all_match(cur)
+                else:
+                    match_id = para[0]
+                    res = db.get_all_event(cur, match_id)
         if cmd == '!help':
-            res = '!su [username] [password] [key]    : sign up (with key if you are admin)\n!si [username] [password]          : sign in\n!ls                                : show the list of all matches\n!scr [id]                          : show the score of the given id\n!help                              : show this help'
-    else:
-        res = 'Invalid command'
+            res = ['!su [username] [password] [key] : sign up (with key if you are admin)', '!si [username] [password] : sign in',
+                   '!ls : show the list of all matches', '!scr [id] : show the score of the given id', '!help : show this help']
     con.sendall(attach_send(res))
     return is_signin, is_admin

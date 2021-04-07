@@ -1,7 +1,8 @@
-# import db
+def format_data(inp):
+    return ''.join(inp)
 
-# db.signup('user1', 'pass1')
-# print(db.signup('user1', 'pass3'))
-res = 'Signed in'
-is_signin = res == 'Signed in'
-print(is_signin)
+
+# a = ('abc', '-', 'edf')
+# print(format_data(a))
+
+print(str(type(list())))
