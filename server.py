@@ -13,14 +13,15 @@ BUFFER_SIZE = int(os.getenv('BUFFER_SIZE'))
 def client_thread(con, ip, port):
     is_signin = False
     is_admin = False
+    is_exit = False
     cur = get_db_cur()
     while True:
         req = receive(con, BUFFER_SIZE)
-        if not len(req):
-            con.close()
-            print(f'{ip}:{port} disconnected')
+        if is_exit or not len(req):
+            exit_client(con, ip, port)
             break
-        is_signin, is_admin = process_send(con, req, is_signin, is_admin, cur)
+        is_signin, is_admin, is_exit = process_send(
+            con, req, (is_signin, is_admin, is_exit), cur)
 
 
 soc = socket.socket(socket.AF_INET, socket.SOCK_STREAM)

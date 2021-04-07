@@ -18,5 +18,7 @@ while True:
             sock.send(attach_send(req_mes))
             res = receive(sock, BUFFER_SIZE)
             print_res(res)
+            if(res == 'Exited'):
+                break
     except KeyboardInterrupt:
         break
