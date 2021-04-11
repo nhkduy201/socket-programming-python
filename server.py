@@ -1,13 +1,8 @@
 import socket
 from threading import Thread
-from ults import *
+from ults import receive, get_host, get_db_cur, exit_client, process_send
 import dotenv
 import os
-dotenv.load_dotenv()
-
-HOST = os.getenv('HOST')
-PORT = int(os.getenv('PORT'))
-BUFFER_SIZE = int(os.getenv('BUFFER_SIZE'))
 
 
 def client_thread(con, ip, port):
@@ -24,17 +19,23 @@ def client_thread(con, ip, port):
             con, req, (is_signin, is_admin, is_exit), cur)
 
 
+dotenv.load_dotenv()
+HOST = get_host()
+PORT = int(os.getenv('PORT'))
+BUFFER_SIZE = int(os.getenv('BUFFER_SIZE'))
+
 soc = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 soc.bind((HOST, PORT))
 soc.listen(10)
-print('Socket now listening')
+print('socket now listening')
 
 
 while True:
     try:
         con, addr = soc.accept()
     except KeyboardInterrupt:
+        print('\nexited')
         break
     ip, port = addr[0], str(addr[1])
     print(f'{ip}:{port} connected')
-    Thread(target=client_thread, args=[con, ip, port]).start()
+    Thread(target=client_thread, args=[con, ip, port], daemon=True).start()

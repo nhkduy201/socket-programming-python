@@ -1,8 +1,5 @@
-def format_data(inp):
-    return ''.join(inp)
-
-
-# a = ('abc', '-', 'edf')
-# print(format_data(a))
-
-print(str(type(list())))
+import socket
+s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+s.connect(("8.8.8.8", 80))
+print(s.getsockname()[0])
+s.close()

@@ -1,6 +1,22 @@
 import os
 import db
 import pickle
+import socket
+import dotenv
+import os
+
+
+def get_host():
+    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    try:
+        s.connect(('8.8.8.8', 80))
+        host = s.getsockname()[0]
+    except Exception:
+        dotenv.load_dotenv()
+        host = os.getenv('HOST')
+    finally:
+        s.close()
+    return host
 
 
 def get_db_cur():
@@ -22,17 +38,6 @@ def receive(socket, buff):
 def attach_send(send_data):
     dump_data = pickle.dumps(send_data)
     return bytes(f'{len(dump_data)} ', 'utf-8') + dump_data
-
-
-def clr_scr():
-    clear_cmd = ''
-    if os.name == 'nt':
-        clear_cmd = 'cls'
-    else:
-        if os.name == 'posix':
-            clear_cmd = 'clear'
-    # return subprocess.run(clear_cmd, shell=True) == 0
-    os.system(clear_cmd)
 
 
 def format_line(line):
@@ -84,7 +89,7 @@ def process_send(con, req, check_datas, cur):
     else:
         if cmd == '!exit':
             is_exit = True
-            res = 'Exited'
+            res = 'exit'
         else:
             if not is_signin:
                 if cmd == '!su':
