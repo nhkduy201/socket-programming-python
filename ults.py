@@ -89,7 +89,7 @@ def process_send(con, req, check_datas, cur):
     else:
         if cmd == '!exit':
             is_exit = True
-            res = 'exit'
+            res = '!exit'
         else:
             if not is_signin:
                 if cmd == '!su':

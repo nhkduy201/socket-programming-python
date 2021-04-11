@@ -1,8 +1,14 @@
 import socket
 from threading import Thread
-from ults import receive, get_host, get_db_cur, exit_client, process_send
+from ults import receive, get_host, get_db_cur, exit_client, process_send, attach_send
 import dotenv
 import os
+
+
+dotenv.load_dotenv()
+HOST = get_host()
+PORT = int(os.getenv('PORT'))
+BUFFER_SIZE = int(os.getenv('BUFFER_SIZE'))
 
 
 def client_thread(con, ip, port):
@@ -18,11 +24,6 @@ def client_thread(con, ip, port):
         is_signin, is_admin, is_exit = process_send(
             con, req, (is_signin, is_admin, is_exit), cur)
 
-
-dotenv.load_dotenv()
-HOST = get_host()
-PORT = int(os.getenv('PORT'))
-BUFFER_SIZE = int(os.getenv('BUFFER_SIZE'))
 
 soc = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 soc.bind((HOST, PORT))
