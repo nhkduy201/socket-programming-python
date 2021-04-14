@@ -3,17 +3,39 @@ import db
 import pickle
 import socket
 import dotenv
-import os
+import argparse
+import threading
 
 
-def get_host():
+def get_info_client():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-i', '--ip', type=str,
+                        help='ip of host', default='127.0.0.1')
+    parser.add_argument('-p', '--port', type=int,
+                        help='port connect to host', default=11201)
+    parser.add_argument('-b', '--buffer', type=int,
+                        help='size of buffer recieve and send', default=8)
+    args = parser.parse_args()
+    return args.ip, args.port, args.buffer
+
+
+def get_info_server():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-p', '--port', type=int,
+                        help='port connect to host', default=11201)
+    parser.add_argument('-b', '--buffer', type=int,
+                        help='size of buffer recieve and send', default=8)
+    args = parser.parse_args()
+    return get_host_ip(), args.port, args.buffer
+
+
+def get_host_ip():
     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     try:
         s.connect(('8.8.8.8', 80))
         host = s.getsockname()[0]
     except Exception:
-        dotenv.load_dotenv()
-        host = os.getenv('HOST')
+        host = '127.0.0.1'
     finally:
         s.close()
     return host
@@ -76,10 +98,10 @@ def is_valid_cmd(cmd, para):
 
 def exit_client(con, ip, port):
     con.close()
-    print(f'{ip}:{port} disconnected')
+    print(f' client {ip}:{port} disconnected')
 
 
-def process_send(con, req, check_datas, cur):
+def handle_client_req(con, req, check_datas, cur):
     is_signin, is_admin, is_exit = check_datas
     res = ''
     cmd = req.split()[0]
@@ -112,3 +134,48 @@ def process_send(con, req, check_datas, cur):
                        '!ls : show the list of all matches', '!scr [id] : show the score of the given id', '!help : show this help']
     con.sendall(attach_send(res))
     return is_signin, is_admin, is_exit
+
+
+def client_thread(con, ip, port, buffer):
+    is_signin = False
+    is_admin = False
+    is_exit = False
+    cur = get_db_cur()
+    while True:
+        req = receive(con, buffer)
+        if is_exit or not len(req):
+            exit_client(con, ip, port)
+            break
+        is_signin, is_admin, is_exit = handle_client_req(
+            con, req, (is_signin, is_admin, is_exit), cur)
+
+
+def server_main_process(sock, buffer):
+    while True:
+        try:
+            con, addr = sock.accept()
+        except KeyboardInterrupt:
+            print('\nexited')
+            break
+        ip, port = addr[0], str(addr[1])
+        print(f'client {ip}:{port} connected')
+        threading.Thread(target=client_thread, args=[
+                         con, ip, port, buffer], daemon=True).start()
+
+
+def client_main_process(sock, buffer):
+    while True:
+        try:
+            req_mes = input("Proceed what: ")
+            if len(req_mes):
+                sock.sendall(attach_send(req_mes))
+                res = receive(sock, buffer)
+                if res == '!exit':
+                    print_res('exited')
+                    sock.close()
+                    break
+                print_res(res)
+        except KeyboardInterrupt:
+            print_res('\nexited')
+            sock.close()
+            break
