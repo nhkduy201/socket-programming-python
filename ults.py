@@ -2,7 +2,6 @@ import os
 import db
 import pickle
 import socket
-import dotenv
 import argparse
 import threading
 
@@ -25,8 +24,10 @@ def get_info_server():
                         help='port connect to host', default=11201)
     parser.add_argument('-b', '--buffer', type=int,
                         help='size of buffer recieve and send', default=8)
+    parser.add_argument('-k', '--key', type=str,
+                        help='key for admin', default='private')
     args = parser.parse_args()
-    return get_host_ip(), args.port, args.buffer
+    return get_host_ip(), args.port, args.buffer, args.key
 
 
 def get_host_ip():
@@ -98,10 +99,10 @@ def is_valid_cmd(cmd, para):
 
 def exit_client(con, ip, port):
     con.close()
-    print(f' client {ip}:{port} disconnected')
+    print(f'client {ip}:{port} disconnected')
 
 
-def handle_client_req(con, req, check_datas, cur):
+def handle_client_req(con, req, check_datas, cur, admin_key):
     is_signin, is_admin, is_exit = check_datas
     res = ''
     cmd = req.split()[0]
@@ -115,7 +116,7 @@ def handle_client_req(con, req, check_datas, cur):
         else:
             if not is_signin:
                 if cmd == '!su':
-                    res = db.signup(cur, para)
+                    res = db.signup(cur, para, admin_key)
                 elif cmd == '!si':
                     res, is_admin, is_signin = db.signin(cur, para)
                 else:
@@ -136,7 +137,7 @@ def handle_client_req(con, req, check_datas, cur):
     return is_signin, is_admin, is_exit
 
 
-def client_thread(con, ip, port, buffer):
+def client_thread(con, ip, port, buffer, admin_key):
     is_signin = False
     is_admin = False
     is_exit = False
@@ -147,10 +148,10 @@ def client_thread(con, ip, port, buffer):
             exit_client(con, ip, port)
             break
         is_signin, is_admin, is_exit = handle_client_req(
-            con, req, (is_signin, is_admin, is_exit), cur)
+            con, req, (is_signin, is_admin, is_exit), cur, admin_key)
 
 
-def server_main_process(sock, buffer):
+def server_main_process(sock, buffer, admin_key):
     while True:
         try:
             con, addr = sock.accept()
@@ -160,7 +161,7 @@ def server_main_process(sock, buffer):
         ip, port = addr[0], str(addr[1])
         print(f'client {ip}:{port} connected')
         threading.Thread(target=client_thread, args=[
-                         con, ip, port, buffer], daemon=True).start()
+                         con, ip, port, buffer, admin_key], daemon=True).start()
 
 
 def client_main_process(sock, buffer):

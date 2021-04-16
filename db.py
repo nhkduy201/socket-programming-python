@@ -1,9 +1,5 @@
 import sqlite3
 import bcrypt
-import dotenv
-import os
-dotenv.load_dotenv()
-KEY = os.getenv('KEY')
 
 
 def getCur():
@@ -33,7 +29,7 @@ def signin(cur, datas):
     return 'Wrong signin info', False, False
 
 
-def signup(cur, datas):
+def signup(cur, datas, admin_key):
     if len(datas) == 2:
         username, password = datas
         key = None
@@ -41,7 +37,7 @@ def signup(cur, datas):
         username, password, key = datas
     try:
         hashed_password = bcrypt.hashpw(password.encode(), bcrypt.gensalt())
-        hashed_key = bcrypt.hashpw(KEY.encode(), bcrypt.gensalt())
+        hashed_key = bcrypt.hashpw(admin_key.encode(), bcrypt.gensalt())
         if key is not None:
             if bcrypt.checkpw(key.encode(), hashed_key):
                 values = (username, hashed_password, True)
