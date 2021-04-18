@@ -1,5 +1,4 @@
 import sqlite3
-import bcrypt
 
 
 def getCur():
@@ -24,7 +23,7 @@ def drop_db(cur):
 def signin(cur, datas):
     username, password = datas
     user = get_user(cur, username)
-    if user is not None and bcrypt.checkpw(password.encode(), user[1]):
+    if user is not None and password == user[1]:
         return 'Signed in', user[2], True
     return 'Wrong signin info', False, False
 
@@ -36,15 +35,13 @@ def signup(cur, datas, admin_key):
     else:
         username, password, key = datas
     try:
-        hashed_password = bcrypt.hashpw(password.encode(), bcrypt.gensalt())
-        hashed_key = bcrypt.hashpw(admin_key.encode(), bcrypt.gensalt())
         if key is not None:
-            if bcrypt.checkpw(key.encode(), hashed_key):
-                values = (username, hashed_password, True)
+            if key == admin_key:
+                values = (username, password, True)
             else:
                 return 'Wrong signin info'
         else:
-            values = (username, hashed_password, False)
+            values = (username, password, False)
         cur.execute('insert into user values (?, ?, ?)',
                     values)
         return "Signed up"

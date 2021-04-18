@@ -18,14 +18,14 @@ def get_info_client():
     return args.ip, args.port, args.buffer
 
 
-def get_info_server():
+def get_info_server(def_adm_key):
     parser = argparse.ArgumentParser()
     parser.add_argument('-p', '--port', type=int,
                         help='port connect to host', default=11201)
     parser.add_argument('-b', '--buffer', type=int,
                         help='size of buffer recieve and send', default=8)
     parser.add_argument('-k', '--key', type=str,
-                        help='key for admin', default='private')
+                        help='key for admin', default=def_adm_key)
     args = parser.parse_args()
     return get_host_ip(), args.port, args.buffer, args.key
 
