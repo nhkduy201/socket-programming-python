@@ -77,8 +77,8 @@ def get_all_event(cur, match_id):
     return event_list
 
 
-cur = getCur()
-cur.execute('delete from match where id = 2')
+# cur = getCur()
+# cur.execute('delete from match where id = 2')
 
 # drop_db(cur)
 # init_db(cur)
@@ -91,8 +91,8 @@ cur.execute('delete from match where id = 2')
 # insert_match(cur, ('as', '2-1', 'cs'),
 #              [('10', '{"scrd":"so10","scr":"1-0"}', True), ('40', '{"scrd":"so20","scr":"2-0"}', True), ('HT', '{"scr":"1-0"}', 'null'), ('89', '{"scrd":"so4";"scr":"2-1"}', False)])
 
-cur.execute('select * from match')
-print(cur.fetchall())
+# cur.execute('select * from match')
+# print(cur.fetchall())
 # cur.execute('select * from match')
 # print(cur.fetchall())
 # cur.execute('select * from event')
