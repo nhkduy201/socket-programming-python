@@ -11,14 +11,13 @@ def init_db(cur):
     cur.execute(
         'create table user(username text not null primary key, password text, is_admin boolean)')
     cur.execute('create table match(id integer not null primary key autoincrement, first_team text not null, score text not null, second_team text not null)')
-    cur.execute('create table event(event_id integer not null, time text not null, detail text not null, is_first_team boolean, match_id integer, primary key(event_id, match_id))')
+    cur.execute('create table event(event_id integer not null, time text not null, detail text not null, is_first_team boolean, match_id integer not null, primary key(event_id, match_id))')
 
 
 def drop_db(cur):
     cur.execute('drop table user')
     cur.execute('drop table match')
     cur.execute('drop table event')
-
 
 def signin(cur, datas):
     username, password = datas
@@ -78,7 +77,9 @@ def get_all_event(cur, match_id):
     return event_list
 
 
-# cur = getCur()
+cur = getCur()
+cur.execute('delete from match where id = 2')
+
 # drop_db(cur)
 # init_db(cur)
 
@@ -90,6 +91,8 @@ def get_all_event(cur, match_id):
 # insert_match(cur, ('as', '2-1', 'cs'),
 #              [('10', '{"scrd":"so10","scr":"1-0"}', True), ('40', '{"scrd":"so20","scr":"2-0"}', True), ('HT', '{"scr":"1-0"}', 'null'), ('89', '{"scrd":"so4";"scr":"2-1"}', False)])
 
+cur.execute('select * from match')
+print(cur.fetchall())
 # cur.execute('select * from match')
 # print(cur.fetchall())
 # cur.execute('select * from event')
