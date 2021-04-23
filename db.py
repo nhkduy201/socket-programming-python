@@ -68,10 +68,17 @@ def get_all_match(cur):
 
 
 def get_all_event(cur, match_id):
+    try:
+        int_match_id = int(match_id)
+    except ValueError:
+        return 'Invalid command'
     cur.execute(
-        f"select ev.time, ev.is_first_team, ev.detail from event ev where ev.match_id = {match_id}")
+        f"select ev.time, ev.is_first_team, ev.detail from event ev where ev.match_id = {int_match_id}")
     event_list = cur.fetchall()
-    cur.execute(f"select m.score from match m where m.id = {match_id}")
+    if len(event_list) == 0:
+        return 'Match not found'
+    print(len(event_list), type(event_list))
+    cur.execute(f"select m.score from match m where m.id = {int_match_id}")
     fulltime_event = ('FT', cur.fetchone()[0], 'null')
     event_list.append(fulltime_event)
     return event_list

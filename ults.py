@@ -4,7 +4,13 @@ import pickle
 import socket
 import argparse
 import threading
-import signal
+from getch import *
+
+def clear_screen():
+    if os.name == 'posix':
+        _ = os.system('clear')
+    else:
+        _ = os.system('cls')
 
 
 def get_info_client():
@@ -80,11 +86,15 @@ def format_line(line):
 
 
 def print_res(res):
+    COLOR = '\033[96m'
+    ENDC = '\033[0m'
+
+    clear_screen()
     if str(type(res)) == "<class 'list'>":
         for r in res:
-            print(format_line(r))
+            print(f'{COLOR}{format_line(r)}{ENDC}')
     else:
-        print(format_line(res))
+        print(f'{COLOR}{format_line(res)}{ENDC}')
 
 
 def is_valid_cmd(cmd, para):
@@ -141,16 +151,16 @@ def handle_client_req(con, req, check_datas, cur, admin_key):
     return is_signin, is_admin, is_exit
 
 def client_thread(con, ip, port, buffer, admin_key, exit_event):
-    con.settimeout(0.5)
+    TIMEOUT = 0.5
+    con.settimeout(TIMEOUT)
     # cnt_check_server = 0
     is_signin = False
     is_admin = False
     is_exit = False
     cur = get_db_cur()
     while True: #not exit_event.isSet():
-        is_exit = exit_event.wait(0.5)
+        is_exit = exit_event.wait(TIMEOUT)
         if is_exit:
-            print(f'{ip}:{port} checking server, server exit, exit sending')
             con.sendall(attach_send('!server_exit'))
         # else:
         #     cnt_check_server += 1
@@ -163,7 +173,9 @@ def client_thread(con, ip, port, buffer, admin_key, exit_event):
             continue
         is_signin, is_admin, is_exit = handle_client_req(con, req, (is_signin, is_admin, is_exit), cur, admin_key)
 
-def server_main_process(sock, buffer, admin_key, exit_event):
+def server_main_process(host, port, sock, buffer, admin_key, exit_event):
+    clear_screen()
+    print(f'server {host}:{port} listening')
     while True:
         try:
             con, addr = sock.accept()
@@ -176,23 +188,37 @@ def server_main_process(sock, buffer, admin_key, exit_event):
         threading.Thread(target=client_thread, args=[
                          con, ip, port, buffer, admin_key, exit_event]).start()
 
+def client_send_process(sock):
+    inp = ''
+    while True:
+        c = read_key()
+        if c == '\n':
+            if len(inp) > 0:
+                sock.sendall(attach_send(inp))
+                inp = ''
+            continue
+        if ord(c) == 127:
+            inp = inp[:-1]
+        else:
+            inp += c
 
 def client_main_process(sock, buffer):
+    clear_screen()
+    # send
+    threading.Thread(target=client_send_process, args=(sock,), daemon=True).start()
+    # receive
     while True:
         try:
-            req_mes = input("Proceed what: ")
-            if len(req_mes):
-                sock.sendall(attach_send(req_mes))
-                res = receive(sock, buffer)
-                if res == '!exit' or res == '!server_exit':
-                    if res == '!exit':
-                        print_res('exited')
-                    if res == '!server_exit':
-                        print_res('server exited')
-                    sock.close()
-                    break
-                print_res(res)
+            res = receive(sock, buffer)
+            if res == '!exit' or res == '!server_exit':
+                if res == '!exit':
+                    print_res('client exit')
+                if res == '!server_exit':
+                    print_res('server exit')
+                sock.close()
+                break
+            print_res(res)
         except KeyboardInterrupt:
-            print_res('\nexited')
+            print_res('client exit')
             sock.close()
             break
