@@ -4,6 +4,7 @@ import pickle
 import socket
 import argparse
 import threading
+import signal
 
 
 def get_info_client():
@@ -47,7 +48,10 @@ def get_db_cur():
 
 
 def receive(socket, buff):
-    first_rec = socket.recv(buff)
+    try:
+        first_rec = socket.recv(buff)
+    except Exception:
+        return '!continue'
     if len(first_rec) == 0:
         return ''
     split_first = first_rec.split(b' ', 1)
@@ -136,32 +140,41 @@ def handle_client_req(con, req, check_datas, cur, admin_key):
     con.sendall(attach_send(res))
     return is_signin, is_admin, is_exit
 
-
-def client_thread(con, ip, port, buffer, admin_key):
+def client_thread(con, ip, port, buffer, admin_key, exit_event):
+    con.settimeout(0.5)
+    # cnt_check_server = 0
     is_signin = False
     is_admin = False
     is_exit = False
     cur = get_db_cur()
-    while True:
+    while True: #not exit_event.isSet():
+        is_exit = exit_event.wait(0.5)
+        if is_exit:
+            print(f'{ip}:{port} checking server, server exit, exit sending')
+            con.sendall(attach_send('!server_exit'))
+        # else:
+        #     cnt_check_server += 1
+        #     print(f'{ip}:{port} checking server, server run normally, time {cnt_check_server}')
         req = receive(con, buffer)
         if is_exit or not len(req):
             exit_client(con, ip, port)
             break
-        is_signin, is_admin, is_exit = handle_client_req(
-            con, req, (is_signin, is_admin, is_exit), cur, admin_key)
+        if req == '!continue':
+            continue
+        is_signin, is_admin, is_exit = handle_client_req(con, req, (is_signin, is_admin, is_exit), cur, admin_key)
 
-
-def server_main_process(sock, buffer, admin_key):
+def server_main_process(sock, buffer, admin_key, exit_event):
     while True:
         try:
             con, addr = sock.accept()
         except KeyboardInterrupt:
-            print('\nexited')
+            exit_event.set()
+            print('\nexited\n')
             break
         ip, port = addr[0], str(addr[1])
         print(f'client {ip}:{port} connected')
         threading.Thread(target=client_thread, args=[
-                         con, ip, port, buffer, admin_key], daemon=True).start()
+                         con, ip, port, buffer, admin_key, exit_event]).start()
 
 
 def client_main_process(sock, buffer):
@@ -171,8 +184,11 @@ def client_main_process(sock, buffer):
             if len(req_mes):
                 sock.sendall(attach_send(req_mes))
                 res = receive(sock, buffer)
-                if res == '!exit':
-                    print_res('exited')
+                if res == '!exit' or res == '!server_exit':
+                    if res == '!exit':
+                        print_res('exited')
+                    if res == '!server_exit':
+                        print_res('server exited')
                     sock.close()
                     break
                 print_res(res)
