@@ -204,6 +204,7 @@ def client_send_process(sock):
 
 def client_main_process(sock, buffer):
     clear_screen()
+    print_res('Try sending "!help"')
     # send
     threading.Thread(target=client_send_process, args=(sock,), daemon=True).start()
     # receive
