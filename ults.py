@@ -4,7 +4,9 @@ import pickle
 import socket
 import argparse
 import threading
+import math
 from getch import *
+from ast import literal_eval
 
 def clear_screen():
     if os.name == 'posix':
@@ -72,6 +74,22 @@ def attach_send(send_data):
     dump_data = pickle.dumps(send_data)
     return bytes(f'{len(dump_data)} ', 'utf-8') + dump_data
 
+def print_event(res, color, endc):
+    col = os.get_terminal_size().columns
+    match = res[0]
+    f_team = match[0]
+    score = match[1]
+    s_team = match[2]
+    print(' ' * 3 + f_team + score.center(col - len(f_team) - len(s_team) - 3) + s_team)
+    event = res[1:]
+    hafl_left = math.floor((col - 3) / 2)
+    for e in event:
+        if e[1] == True:
+            print(e[0] + (3 - len(e[0])) * ' ' + e[2].center(hafl_left) + ' ' * (col - hafl_left))
+        elif e[1] == False:
+            print(e[0] + (3 - len(e[0])) * ' ' + hafl_left * ' ' + e[2].center(col - hafl_left))
+        elif e[1] == None:
+            print(e[0] + (3 - len(e[0])) * ' ' + e[2].center(col - 3))
 
 def format_line(line):
     formated_line = ''
@@ -91,8 +109,11 @@ def print_res(res):
 
     clear_screen()
     if str(type(res)) == "<class 'list'>":
-        for r in res:
-            print(f'{COLOR}{format_line(r)}{ENDC}')
+        if type(res[0]) != "<class 'str'>" and len(res[0]) == 3:
+            print_event(res, COLOR, ENDC)
+        else:
+            for r in res:
+                print(f'{COLOR}{format_line(r)}{ENDC}')
     else:
         print(f'{COLOR}{format_line(res)}{ENDC}')
 
@@ -104,7 +125,8 @@ def is_valid_cmd(cmd, para):
         '!ls': (0,),
         '!scr': (1,),
         '!help': (0,),
-        '!exit': (0,)
+        '!exit': (0,),
+        '!ism': (1,)
     }
     if len(para) in command_map.get(cmd, ()):
         return True
@@ -141,9 +163,19 @@ def handle_client_req(con, req, check_datas, cur, admin_key):
                 elif cmd != '!help':
                     if cmd == '!ls':
                         res = db.get_all_match(cur)
-                    else:
+                    elif cmd == '!scr':
                         match_id = para[0]
                         res = db.get_all_event(cur, match_id)
+                    else:
+                        if not is_admin:
+                            res = 'You are not admin'
+                        else:
+                            if cmd == '!ism':
+                                ism_datas = literal_eval(para[0])
+                                match_datas = ism_datas[0]
+                                event_datas = ism_datas[1]
+                                db.insert_match(cur, match_datas, event_datas)
+                                res = 'insert match successfully'
             if cmd == '!help':
                 res = ['!su [username] [password] [key] : sign up (with key if you are admin)', '!si [username] [password] : sign in',
                        '!ls : show the list of all matches', '!scr [id] : show the score of the given id', '!help : show this help']

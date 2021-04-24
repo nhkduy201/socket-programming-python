@@ -72,35 +72,24 @@ def get_all_event(cur, match_id):
         int_match_id = int(match_id)
     except ValueError:
         return 'Invalid command'
+    cur.execute(f"select m.first_team, m.score, m.second_team from match m where m.id = {int_match_id}")
+    match = cur.fetchone()
+    event_list = [match]
     cur.execute(
         f"select ev.time, ev.is_first_team, ev.detail from event ev where ev.match_id = {int_match_id}")
-    event_list = cur.fetchall()
+    event_list = event_list + cur.fetchall()
     if len(event_list) == 0:
         return 'Match not found'
-    print(len(event_list), type(event_list))
-    cur.execute(f"select m.score from match m where m.id = {int_match_id}")
-    fulltime_event = ('FT', cur.fetchone()[0], 'null')
+    fulltime_event = ('FT', None, match[1])
     event_list.append(fulltime_event)
     return event_list
 
 
 # cur = getCur()
-# cur.execute('delete from match where id = 2')
-
 # drop_db(cur)
 # init_db(cur)
+# signup(cur, ('normal_client', 'clientpass'), 'wrongkey')
+# signup(cur, ('admin_client', 'adminpass'), 'private')
 
-# signup(cur, ('user1', 'pass2'))
-# signup(cur, ('user2', 'pass1'))
-
-# insert_match(cur, ('mu', '1-1', 'mc'),
-#              [('10', '{"yc":"so1"}', False), ('40', '{"scrd":"so10","scr":"1-0"}', True), ('HT', '{"scr":"1-0"}', 'null'), ('89', '{"scrd":"so4";"scr":"1-1"}', False)])
-# insert_match(cur, ('as', '2-1', 'cs'),
-#              [('10', '{"scrd":"so10","scr":"1-0"}', True), ('40', '{"scrd":"so20","scr":"2-0"}', True), ('HT', '{"scr":"1-0"}', 'null'), ('89', '{"scrd":"so4";"scr":"2-1"}', False)])
-
-# cur.execute('select * from match')
-# print(cur.fetchall())
-# cur.execute('select * from match')
-# print(cur.fetchall())
-# cur.execute('select * from event')
-# print(cur.fetchall())
+# insert_match(cur, ('Arsenal', '0-1', 'Everton'), [('38', 'yc:Thomas', True), ('HT', '0-0', None), ('55', 'yc:Allan', False), ('62', 'yc:Mason Holgate', False), ('68', 'yc:Fabian Delph', False), ('76', '0-1:Bernd Leno', False)])
+# insert_match(cur, ('AFC Bournemouth', '0-1', 'Brentford'), [('25', 'yc:Pontus Jansson', True), ('HT', '0-0', None), ('50', 'rc:Pontus Jansson', True), ('68', 'rc:Jefferson-yc:Mason Holgate', None), ('78', '0-1:Bryan Mbeumo', False), ('80', 'rc:Ivan Toney', True)])
