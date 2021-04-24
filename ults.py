@@ -181,7 +181,7 @@ def server_main_process(host, port, sock, buffer, admin_key, exit_event):
             con, addr = sock.accept()
         except KeyboardInterrupt:
             exit_event.set()
-            print('\nexited\n')
+            print('\nserver exit')
             break
         ip, port = addr[0], str(addr[1])
         print(f'client {ip}:{port} connected')
